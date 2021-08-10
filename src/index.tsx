@@ -6,7 +6,6 @@ import { fetchPlugin } from './plugins/fetch-plugin';
 
 const App = () => {
   const [input, setInput] = useState('');
-  const [code, setCode] = useState('');
   const iframe = useRef<any>();
   const ref = useRef<any>();
   const startService = async () => {
@@ -25,6 +24,7 @@ const App = () => {
       return;
     }
 
+    iframe.current.srcDoc = html;
     const result = await ref.current.build({
       entryPoints: ['index.js'],
       bundle: true,
@@ -57,7 +57,17 @@ const App = () => {
 
     <script>
     window.addEventListener('message',(event)=>{
-      eval(event.data)
+
+      try{
+        eval(event.data)
+      }
+      catch(error){
+
+        const root = document.querySelector('#root')
+        root.innerHTML = '<div style="color:red" > <h4>Runtime Error</h4> ' + error +  '</div>'
+        console.log(error);
+
+      }
     },false)</script>
     
     </body>
@@ -72,9 +82,12 @@ const App = () => {
       <div>
         <button onClick={onClick}>Submit</button>
       </div>
-      <iframe ref={iframe} sandbox='allow-scripts' srcDoc={html} title='test' />
-
-      <pre>{code}</pre>
+      <iframe
+        ref={iframe}
+        sandbox='allow-scripts'
+        srcDoc={html}
+        title='preview'
+      />
     </div>
   );
 };
