@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import MonacoEditor, { EditorDidMount } from '@monaco-editor/react';
+import prettier from 'prettier';
+import parser from 'prettier/parser-babel';
 
 interface CodeEditorProps {
   initialValue: string;
@@ -6,31 +9,57 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ onChange, initialValue }) => {
+  const editorRef = useRef<any>();
   const onEditorDidMount: EditorDidMount = (getValue, monacoEditor) => {
     monacoEditor.onDidChangeModelContent(() => {
       onChange(getValue());
+      editorRef.current = monacoEditor;
     });
 
     monacoEditor.getModel()?.updateOptions({ tabSize: 2 });
   };
+
+  const onFormatClick = () => {
+    //  get current value
+    const unformatted = editorRef.current.getModel().getValue();
+
+    // Format that value
+    const formatted = prettier.format(unformatted, {
+      parser: 'babel',
+      plugins: [parser],
+      useTabs: false,
+      semi: true,
+      singleQuote: true,
+    });
+    // set the formatted value back in the editor
+    editorRef.current.setValue(formatted);
+  };
   return (
-    <MonacoEditor
-      editorDidMount={onEditorDidMount}
-      language='javascript'
-      theme='dark'
-      height='500px'
-      value={initialValue}
-      options={{
-        wordWrap: 'on',
-        minimap: { enabled: false },
-        showUnused: false,
-        folding: false,
-        lineNumbersMinChars: 3,
-        fontSize: 16,
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
-      }}
-    />
+    <div>
+      <button
+        className='button button-format is-primary is-small'
+        onClick={onFormatClick}
+      >
+        Format
+      </button>
+      <MonacoEditor
+        editorDidMount={onEditorDidMount}
+        language='javascript'
+        theme='dark'
+        height='500px'
+        value={initialValue}
+        options={{
+          wordWrap: 'on',
+          minimap: { enabled: false },
+          showUnused: false,
+          folding: false,
+          lineNumbersMinChars: 3,
+          fontSize: 16,
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+        }}
+      />
+    </div>
   );
 };
 
